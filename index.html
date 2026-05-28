@@ -332,7 +332,7 @@
             <div class="log-container" id="result-history">
                 <!-- Logs injected via JS -->
             </div>
-            <button onclick="location.reload()" style="margin-top: 10px;">ULANGI SIMULASI</button>
+            <button id="btn-restart" onclick="location.reload()" style="margin-top: 10px;">ULANGI SIMULASI</button>
         </div>
         <div class="footer" style="padding-top: 0;">Education & Training Dept. © 2026</div>
     </div>
@@ -553,12 +553,13 @@
         }
     ];
 
-    // Game State
+    // Game State & Analytics Variables
     let playerName = "";
     let playerNIK = "";
     let currentQ = 0;
     let score = 0;
     let historyLog = [];
+    let waktuMulaiGame = null; // Variabel global untuk merekam waktu (Analytics)
     
     // Timer System
     const TIME_LIMIT = 10000; // 10 Detik
@@ -590,6 +591,13 @@
         document.getElementById('screen-game').classList.add('active');
         document.getElementById('hud').style.display = 'flex';
         
+        /* * ==========================================
+         * TRIGGER ANALYTICS 1: Waktu Mulai Game
+         * ==========================================
+         * Menangkap waktu presisi saat pemain mulai menekan tombol main. 
+         */
+        waktuMulaiGame = new Date();
+
         playBGM();
         loadQuestion();
     }
@@ -797,6 +805,85 @@
             `;
             logContainer.appendChild(div);
         });
+
+        /* * ==========================================
+         * TRIGGER ANALYTICS 2: Memicu Data Push 
+         * ==========================================
+         * Fungsi ini dipanggil secara asynchronous tepat ketika layar 
+         * evaluasi (Result Screen) ditampilkan kepada pengguna.
+         */
+        sendGameDataToGoogleSheets();
+    }
+
+    /* * ========================================================
+     * FUNGSI INTEGRASI: Mengirim data ke Google Apps Script
+     * ========================================================
+     */
+    async function sendGameDataToGoogleSheets() {
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzU9y4SIsDneNEu7rkHbi_L_ZyayNaDm1SCxhAhsszNRv_9U6gi4isiS9gD8hFj0YMg/exec";
+
+        // Kalkulasi waktu akhir dan durasi
+        const waktuSelesaiGame = new Date();
+        // Cegah error jika waktuMulaiGame null (misal: user langsung tembak fungsi)
+        const durasiDetik = waktuMulaiGame ? Math.round((waktuSelesaiGame - waktuMulaiGame) / 1000) : 0; 
+        
+        // Kalkulasi metrik
+        const persentaseAkurasi = Math.round((score / questions.length) * 100);
+        const statusKelulusan = persentaseAkurasi >= 70 ? "Lulus" : "Tidak Lulus";
+
+        // Helper fungsi format waktu agar rapi di Spreadsheet
+        const formatWaktu = (dateObj) => {
+            if (!dateObj) return "";
+            return dateObj.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+        };
+
+        // Mempersiapkan struktur object JSON yang identik 100% dengan GAS backend
+        const playerData = {
+            User_ID: playerNIK || "UNKNOWN",
+            Nama_Pemain: playerName || "UNKNOWN",
+            Email_User: "-", // Dikosongkan karena form awal tidak meminta email
+            Waktu_Mulai: formatWaktu(waktuMulaiGame),
+            Waktu_Selesai: formatWaktu(waktuSelesaiGame),
+            Durasi_Penyelesaian_Detik: durasiDetik,
+            Skor_Total: score,
+            Persentase_Akurasi: persentaseAkurasi + "%",
+            Total_Jawaban_Benar: score,
+            Total_Jawaban_Salah: questions.length - score,
+            Sisa_Nyawa_Peluang: 0, // Tidak diimplementasi pada desain game saat ini
+            Frekuensi_Bantuan_Hint: 0, // Hint bersifat pasif (tidak diklik), diset 0
+            Status_Kelulusan: statusKelulusan
+        };
+
+        const btnRestart = document.getElementById('btn-restart');
+
+        try {
+            console.log("Memulai pengiriman data ke Analytics Server...");
+            if(btnRestart) btnRestart.innerText = "MENGIRIM DATA... ⏳";
+            
+            const response = await fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    // text/plain sangat vital di sini untuk mencegah masalah CORS Preflight (OPTIONS request) pada GAS
+                    'Content-Type': 'text/plain;charset=utf-8' 
+                },
+                body: JSON.stringify(playerData)
+            });
+
+            const result = await response.json();
+            
+            if(result.status === "success") {
+                console.log("✅ Data Gamifikasi Tersimpan di Google Sheets!", result);
+                if(btnRestart) btnRestart.innerText = "ULANGI SIMULASI"; // Kembalikan state tombol
+            } else {
+                console.error("❌ Gagal merespon dari server:", result.message);
+                if(btnRestart) btnRestart.innerText = "ULANGI SIMULASI (Gagal Save)";
+            }
+
+        } catch (error) {
+            console.error("❌ Jaringan bermasalah atau CORS diblokir:", error);
+            if(btnRestart) btnRestart.innerText = "ULANGI SIMULASI (Koneksi Error)";
+        }
     }
 
 </script>
