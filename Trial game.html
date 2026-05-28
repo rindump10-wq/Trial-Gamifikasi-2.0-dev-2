@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office Survival: The Platinum Protocol</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,800;1,400&display=swap');
+
+        :root {
+            --bg-base: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --panel-border: rgba(255, 255, 255, 0.1);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #8b5cf6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* Container & Glassmorphism Panels */
+        #app-container {
+            width: 100%;
+            max-width: 500px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding: 20px;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+            margin-bottom: 20px;
+        }
+
+        /* Typography */
+        h1, h2, h3 { color: var(--text-main); margin-bottom: 12px; }
+        h1 { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #60a5fa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center;}
+        p { color: var(--text-muted); line-height: 1.6; font-size: 0.95rem; margin-bottom: 15px;}
+        
+        .hook-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 20px;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        /* Inputs & Buttons */
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;}
+        input {
+            width: 100%; padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155; border-radius: 12px;
+            color: white; font-size: 1rem; transition: all 0.3s;
+        }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
+
+        button {
+            width: 100%; padding: 16px;
+            background: linear-gradient(135deg, var(--primary), #2563eb);
+            border: none; border-radius: 12px;
+            color: white; font-size: 1.05rem; font-weight: 800; letter-spacing: 0.5px;
+            cursor: pointer; box-shadow: 0 4px 15px var(--primary-glow);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+        }
+        button:active { transform: scale(0.97); box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        button:disabled { background: #475569; box-shadow: none; cursor: not-allowed; opacity: 0.7; transform: none;}
+
+        .btn-option {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid #475569;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            text-align: left; padding: 18px; margin-bottom: 12px;
+            font-size: 0.95rem; line-height: 1.4; font-weight: 600;
+        }
+        .btn-option:hover:not(:disabled) { 
+            background: #1e293b; border-color: var(--primary); 
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); transform: translateY(-2px);
+        }
+
+        /* Top HUD & Audio Toggle */
+        #hud {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; padding: 10px 15px;
+            background: var(--panel-bg); border-radius: 12px; border: 1px solid var(--panel-border);
+        }
+        .score-display { font-weight: 800; color: var(--primary); font-size: 1.1rem; }
+        .audio-btn {
+            background: rgba(255,255,255,0.1); box-shadow: none; width: auto; 
+            padding: 8px 12px; border-radius: 20px; font-size: 0.8rem; margin: 0;
+        }
+
+        /* Progress & Timer */
+        .progress-container { margin-bottom: 20px; }
+        .progress-header { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600;}
+        .progress-track { width: 100%; height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
+        #overall-progress { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); width: 0%; transition: width 0.4s ease; }
+        
+        #timer-wrap { margin: 15px 0 25px 0; position: relative; }
+        #timer-text { position: absolute; top: -25px; right: 0; font-size: 0.85rem; font-weight: 800; color: var(--success); }
+        .timer-track { width: 100%; height: 12px; background: #1e293b; border-radius: 6px; overflow: hidden; border: 1px solid #334155;}
+        #timer-bar { height: 100%; background: var(--success); width: 100%; box-shadow: 0 0 10px var(--success); }
+        .danger-time { background: var(--danger) !important; box-shadow: 0 0 15px var(--danger) !important; }
+        .danger-text { color: var(--danger) !important; animation: blink 0.5s infinite;}
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* Scenario Box */
+        .scenario-box { margin-bottom: 25px; }
+        .story-context { font-size: 0.85rem; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block;}
+        .scenario-text { font-size: 1.1rem; font-weight: 600; line-height: 1.5; color: white;}
+        .hint-text { margin-top: 10px; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px;}
+
+        /* Feedback Overlay */
+        #feedback-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            padding: 30px; text-align: center; z-index: 100;
+        }
+        #feedback-overlay.active { display: flex; animation: fadeIn 0.3s ease-out; }
+        .fb-card { background: var(--panel-bg); border: 1px solid var(--panel-border); padding: 30px; border-radius: 20px; max-width: 400px; width: 100%; }
+        .fb-icon { font-size: 4rem; margin-bottom: 15px; }
+        .fb-correct { color: var(--success); }
+        .fb-wrong { color: var(--danger); }
+        #fb-desc { margin: 15px 0 25px 0; font-size: 1rem; color: #e2e8f0; }
+
+        /* Badges */
+        .badges-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .badge {
+            background: rgba(0,0,0,0.3); border: 1px solid #334155; border-radius: 16px;
+            padding: 15px 10px; text-align: center; opacity: 0.4; filter: grayscale(100%); transition: all 0.5s;
+        }
+        .badge.earned { opacity: 1; filter: grayscale(0%); background: rgba(59, 130, 246, 0.1); border-color: var(--primary); box-shadow: 0 0 15px rgba(59,130,246,0.2);}
+        .badge-icon { font-size: 2.5rem; margin-bottom: 8px; }
+        .badge-title { font-size: 0.85rem; font-weight: 800; color: var(--text-main); line-height: 1.2;}
+        .badge-desc { font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; }
+
+        /* Debrief List */
+        .log-container { max-height: 250px; overflow-y: auto; padding-right: 5px; margin-bottom: 20px;}
+        .log-container::-webkit-scrollbar { width: 6px; }
+        .log-container::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px;}
+        .log-container::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px;}
+        .log-item { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 3px solid #334155; }
+        .log-item.correct { border-left-color: var(--success); }
+        .log-item.wrong { border-left-color: var(--danger); }
+        .log-q { font-size: 0.85rem; color: #e2e8f0; margin-bottom: 5px; }
+        .log-fb { font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
+
+        /* Footer */
+        .footer { text-align: center; font-size: 0.8rem; color: #64748b; margin-top: auto; padding: 20px 0 10px 0; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+
+    <!-- HUD (Visible only during game/result) -->
+    <div id="hud" style="display: none;">
+        <div>Small Wins: <span class="score-display" id="score-display">0</span>/10</div>
+        <button id="audio-btn" class="audio-btn" onclick="toggleAudio()">🔊 BGM ON</button>
+    </div>
+
+    <!-- SCREEN 1: THE GATEWAY -->
+    <div id="screen-gateway" class="screen active">
+        <div class="glass-panel" style="margin-top: auto; margin-bottom: auto;">
+            <h1>OFFICE SURVIVAL</h1>
+            <p style="text-align: center; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px;">The Platinum Protocol</p>
+            
+            <div class="input-group">
+                <label for="input-name">Nama Peserta</label>
+                <input type="text" id="input-name" placeholder="Ketik nama Anda..." autocomplete="off">
+            </div>
+            
+            <div class="input-group">
+                <label for="input-nik">NIK / ID Karyawan</label>
+                <input type="text" id="input-nik" placeholder="Ketik NIK..." autocomplete="off">
+            </div>
+            
+            <button onclick="goToBriefing()" style="margin-top: 15px;">LOGIN SISTEM</button>
+        </div>
+        <div class="footer">Education & Training Dept. © 2026</div>
+    </div>
+
+    <!-- SCREEN 2: MISSION BRIEFING -->
+    <div id="screen-briefing" class="screen">
+        <div class="glass-panel">
+            <h2>Mission Briefing</h2>
+            <p>Selamat datang, <span id="display-name" style="color:var(--primary); font-weight:800;"></span>.</p>
+            
+            <div class="hook-box">
+                <b>WHY ARE YOU HERE?</b><br>
+                Bayangkan hari kerja paling *hectic*. Email komplain, revisi mendadak, rekan kerja egois. Bisakah kamu menjaga "Main Character Energy" dan tetap profesional tanpa terbawa emosi (Sistem 1)?
+            </div>
+
+            <h3 style="font-size: 1rem;">Objectives & Rules:</h3>
+            <ul style="color: var(--text-muted); margin-left: 20px; font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px;">
+                <li><b>Waktu Terbatas:</b> Kamu hanya punya <b>10 detik</b> untuk merespons setiap masalah.</li>
+                <li><b>Jeda Mental (ABC Model):</b> Beri jeda pada insting, ubah Benak (B), dan pilih Logika (Sistem 2).</li>
+                <li><b>The Platinum Rule:</b> Adaptasi TEMPO dan FOKUS-mu demi kenyamanan audiens/klien.</li>
+                <li>Kumpulkan poin untuk meraih lencana <i>Controller</i> dan <i>Adapter</i>.</li>
+            </ul>
+
+            <button onclick="startGame()">SAYA SIAP (MULAI)</button>
+        </div>
+        <div class="footer">Education & Training Dept. © 2026</div>
+    </div>
+
+    <!-- SCREEN 3: CORE EXECUTION (GAME) -->
+    <div id="screen-game" class="screen">
+        <div class="glass-panel">
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span>Progress Skenario</span>
+                    <span id="progress-text">1/10</span>
+                </div>
+                <div class="progress-track">
+                    <div id="overall-progress"></div>
+                </div>
+            </div>
+
+            <div id="timer-wrap">
+                <div id="timer-text">10.0s</div>
+                <div class="timer-track">
+                    <div id="timer-bar"></div>
+                </div>
+            </div>
+
+            <div class="scenario-box">
+                <span class="story-context" id="q-context">Level 1: ABC Model</span>
+                <div class="scenario-text" id="q-text">Loading scenario...</div>
+                <div class="hint-text">💡 <i>Hint: <span id="q-hint">...</span></i></div>
+            </div>
+
+            <div id="options-container">
+                <!-- Options injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- FEEDBACK OVERLAY -->
+    <div id="feedback-overlay">
+        <div class="fb-card">
+            <div id="fb-icon" class="fb-icon">✅</div>
+            <h2 id="fb-title">Tepat Sekali!</h2>
+            <p id="fb-desc">Penjelasan akan muncul di sini.</p>
+            <button onclick="nextQuestion()">Lanjut Skenario >></button>
+        </div>
+    </div>
+
+    <!-- SCREEN 4: POST-ACTION DEBRIEF -->
+    <div id="screen-result" class="screen">
+        <div class="glass-panel" style="margin-bottom: 10px;">
+            <h2 style="text-align: center;">Performance Review</h2>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <div style="font-size: 3.5rem; font-weight: 800; color: var(--primary); line-height: 1;" id="final-score-percent">0%</div>
+                <p style="margin-top: 5px;">Tingkat Logika & Adaptabilitas</p>
+            </div>
+
+            <div class="badges-grid">
+                <div class="badge" id="badge-controller">
+                    <div class="badge-icon">🧠</div>
+                    <div class="badge-title">Mindset<br>Controller</div>
+                    <div class="badge-desc">Sistem 2 Dominan</div>
+                </div>
+                <div class="badge" id="badge-adapter">
+                    <div class="badge-icon">💎</div>
+                    <div class="badge-title">Platinum<br>Adapter</div>
+                    <div class="badge-desc">Adaptasi Presisi</div>
+                </div>
+            </div>
+
+            <div id="reinforcement-msg" class="hook-box" style="text-align: center; border-left: none; border-bottom: 4px solid var(--primary); border-radius: 12px; margin-bottom: 0;">
+                Message
+            </div>
+        </div>
+
+        <div class="glass-panel" style="padding: 15px 20px;">
+            <h3>Log Tindakan (Debrief):</h3>
+            <div class="log-container" id="result-history">
+                <!-- Logs injected via JS -->
+            </div>
+            <button onclick="location.reload()" style="margin-top: 10px;">ULANGI SIMULASI</button>
+        </div>
+        <div class="footer" style="padding-top: 0;">Education & Training Dept. © 2026</div>
+    </div>
+
+</div>
+
+<script>
+    /* =========================================
+       AUDIO SYSTEM (Web Audio API Procedural)
+       ========================================= */
+    let audioCtx;
+    let bgmOscillator = null;
+    let bgmGain = null;
+    let isMuted = false;
+    let bgmInterval;
+    let step = 0;
+
+    // Gen Z Lo-Fi Synth sequence (Chill but driving focus)
+    const sequence = [
+        220.00, 261.63, 329.63, 261.63, 
+        196.00, 261.63, 329.63, 261.63
+    ]; 
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playBGM() {
+        if(isMuted) return;
+        initAudio();
+        
+        bgmGain = audioCtx.createGain();
+        bgmGain.gain.value = 0.03; // Sangat pelan agar tidak ganggu fokus
+        bgmGain.connect(audioCtx.destination);
+
+        const playTick = () => {
+            if(isMuted) return;
+            let osc = audioCtx.createOscillator();
+            osc.type = 'sine'; // Suara bulat/lo-fi
+            osc.frequency.setValueAtTime(sequence[step] / 1.5, audioCtx.currentTime); // Turunkan oktaf
+            
+            // Envelope per note
+            let env = audioCtx.createGain();
+            env.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            env.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+            
+            osc.connect(env);
+            env.connect(bgmGain);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+
+            step = (step + 1) % sequence.length;
+        };
+
+        bgmInterval = setInterval(playTick, 400); // 150 BPM
+    }
+
+    function stopBGM() {
+        clearInterval(bgmInterval);
+    }
+
+    function toggleAudio() {
+        const btn = document.getElementById('audio-btn');
+        isMuted = !isMuted;
+        if(isMuted) {
+            stopBGM();
+            btn.innerText = "🔇 BGM OFF";
+        } else {
+            playBGM();
+            btn.innerText = "🔊 BGM ON";
+        }
+    }
+
+    function playSFX(type) {
+        if(isMuted) return;
+        initAudio();
+        let osc = audioCtx.createOscillator();
+        let gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        let now = audioCtx.currentTime;
+
+        if (type === 'correct') {
+            // Chime up (Small Win)
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+            osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+            gainNode.gain.setValueAtTime(0.1, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'wrong') {
+            // Low buzz (Error)
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.exponentialRampToValueAtTime(80, now + 0.3);
+            gainNode.gain.setValueAtTime(0.1, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        }
+    }
+
+    /* =========================================
+       GAME DATA & LOGIC
+       ========================================= */
+    const questions = [
+        // Level 1: ABC Model & Small Wins (Q1-Q5)
+        {
+            context: "Level 1: ABC Model",
+            q: "(Kejadian) Bos melempar revisi besar 5 menit sebelum jam pulang kerja Anda.",
+            hint: "Ubah mindset Korban menjadi Pengendali.",
+            opt1: "Tarik napas, lalu tanya bagian mana yang paling prioritas diselesaikan hari ini.", // Benar
+            opt2: "Mengeluh di grup WhatsApp dan merasa bos sengaja menyiksa karyawan.", // Salah
+            correct: 1,
+            feedbackC: "Small Win! Menanyakan prioritas adalah respons Sistem 2. Anda mengambil kendali situasi, bukan menjadi korban keadaan.",
+            feedbackW: "Emosi (Sistem 1) mengambil alih! Mengeluh hanya menaikkan stres dan tidak menyelesaikan revisi."
+        },
+        {
+            context: "Level 1: ABC Model",
+            q: "(Kejadian) Klien mengirim email komplain dengan kata-kata yang cukup kasar.",
+            hint: "Gunakan jeda untuk meredam insting defensif.",
+            opt1: "Langsung membalas dengan nada defensif untuk membela harga diri perusahaan.", // Salah
+            opt2: "Tinggalkan meja 2 menit, minum air, lalu balas fokus pada solusi objektif.", // Benar
+            correct: 2,
+            feedbackC: "Small Win! Jeda 2 menit menyelamatkan Anda. Fokus pada solusi membuktikan Anda menguasai emosi.",
+            feedbackW: "Reaktif! Membalas amarah dengan amarah (Sistem 1) hanya akan mengeskalasi konflik bisnis."
+        },
+        {
+            context: "Level 1: Konsistensi Tugas",
+            q: "(Kejadian) Anda harus menginput 500 data ke Excel. Tugas ini sangat monoton.",
+            hint: "Gunakan taktik untuk menjaga Sistem 2 tetap bekerja.",
+            opt1: "Menunda-nunda dan scroll media sosial karena membayangkan capeknya.", // Salah
+            opt2: "Targetkan input 50 data dulu, lalu istirahat 1 menit sebagai 'Small Wins'.", // Benar
+            correct: 2,
+            feedbackC: "Strategi Cerdas! Memecah tugas monoton menjadi 'Small Wins' menjaga logika tetap berjalan tanpa kelelahan mental.",
+            feedbackW: "Prokrastinasi! Itu adalah cara insting (Sistem 1) menghindari ketidaknyamanan. Tugas malah makin menumpuk."
+        },
+        {
+            context: "Level 1: ABC Model",
+            q: "(Kejadian) Rekan setim tidak mengerjakan bagiannya di proyek penting bersama.",
+            hint: "Fokus pada penyelesaian, bukan luapan emosi.",
+            opt1: "Ajak bicara empat mata, cari tahu kendalanya, dan cari jalan keluar.", // Benar
+            opt2: "Menyindirnya di depan manajer agar dia malu dan jera.", // Salah
+            correct: 1,
+            feedbackC: "Komunikasi Asertif! Anda menggunakan Logika untuk menyelesaikan masalah akar, bukan sekadar menghukum.",
+            feedbackW: "Insting balas dendam! Menyindir hanya merusak dinamika tim dan tidak menyelesaikan proyek."
+        },
+        {
+            context: "Level 1: ABC Model",
+            q: "(Kejadian) Komputer Anda tiba-tiba error. Pekerjaan 1 jam belum ter-save.",
+            hint: "Pemisahan antara 'Kejadian' dan 'Benak'.",
+            opt1: "Membanting mouse, merajuk, dan merasa hari ini adalah hari tersial.", // Salah
+            opt2: "Menerima kenyataan, cari fitur auto-recovery, mulai kerjakan ulang dengan tenang.", // Benar
+            correct: 2,
+            feedbackC: "Mental Baja! Anda mengendalikan Benak (B). Alat rusak adalah kejadian, tapi panik atau tenang adalah pilihan Anda.",
+            feedbackW: "Mindset Korban aktif. Membanting barang tidak akan mengembalikan file Anda yang hilang."
+        },
+        
+        // Level 2: The Platinum Rule - Adaptability (Q6-Q10)
+        {
+            context: "Level 2: The Platinum Rule",
+            q: "(Kejadian) Bos Anda tipe 'Driver' (Cepat & Fokus pada Hasil). Dia menanyakan progress di lorong.",
+            hint: "Sesuaikan Tempo dan Fokus Anda demi kenyamanannya.",
+            opt1: "Sampaikan hasil akhir dan deadline penyelesaian secara singkat & padat (Bottom-line).", // Benar
+            opt2: "Ceritakan proses kerja secara mendetail dari awal agar dia tahu Anda bekerja keras.", // Salah
+            correct: 1,
+            feedbackC: "Adaptasi Sukses! Anda mempercepat TEMPO dan FOKUS pada hasil. Bos tipe Driver sangat menghargai efisiensi ini.",
+            feedbackW: "Gagal beradaptasi. Bos tipe Driver akan frustrasi mendengar proses yang bertele-tele."
+        },
+        {
+            context: "Level 2: The Platinum Rule",
+            q: "(Kejadian) Anda butuh data penting dari rekan IT tipe 'Analytical' (Lambat & Fokus Data).",
+            hint: "Jangan memaksakan tempo cepat kepada orang analitis.",
+            opt1: "Telepon dia dan desak agar datanya dikirim sekarang juga karena Anda butuh cepat.", // Salah
+            opt2: "Kirim email terstruktur berisi alasan logis kebutuhan data, dan beri dia waktu.", // Benar
+            correct: 2,
+            feedbackC: "Platinum Adapter! Melambatkan TEMPO dan memberi struktur FOKUS membuat tipe Analytical nyaman membantu Anda.",
+            feedbackW: "Sistem 1 yang terburu-buru. Mendesak tipe Analytical justru membuat mereka defensif dan melambatkan pekerjaan."
+        },
+        {
+            context: "Level 2: The Platinum Rule",
+            q: "(Kejadian) Meeting dengan klien baru tipe 'Expressive' (Cepat & Fokus Hubungan/Ide).",
+            hint: "Apa yang membuat tipe ekspresif merasa dihargai?",
+            opt1: "Buka laptop dan langsung paksa dia melihat detail angka kontrak kerja.", // Salah
+            opt2: "Sisihkan waktu awal untuk basa-basi antusias dan dengarkan visi/ide besarnya.", // Benar
+            correct: 2,
+            feedbackC: "Luar Biasa! Mempercepat TEMPO energi dan FOKUS pada hubungan personal akan memenangkan hati klien Ekspresif.",
+            feedbackW: "Terlalu kaku! Mengabaikan 'small talk' pada klien ekspresif akan mematikan chemistry bisnis."
+        },
+        {
+            context: "Level 2: The Platinum Rule",
+            q: "(Kejadian) Anggota tim tipe 'Amiable' (Lambat & Fokus Hubungan) terlihat stres berat dengan target.",
+            hint: "Harmoni adalah kunci bagi tipe ini.",
+            opt1: "Sapa secara hangat, tanya kabarnya secara personal, dan tawarkan dukungan emosional.", // Benar
+            opt2: "Tegur dia untuk bekerja lebih cepat agar target keseluruhan tim tidak terancam.", // Salah
+            correct: 1,
+            feedbackC: "Empati Presisi! Melambatkan TEMPO dan FOKUS pada keamanan emosional akan mengembalikan performa kerjanya.",
+            feedbackW: "Panik target (Sistem 1). Menekan tipe Amiable hanya akan membuat mereka semakin lumpuh dan takut salah."
+        },
+        {
+            context: "Final Stage: Integrasi",
+            q: "(Kejadian) Presentasi ke Direksi dengan ragam kepribadian. Beberapa mulai tampak bosan dan melihat jam.",
+            hint: "Gabungkan Jeda Mental dan Adaptabilitas.",
+            opt1: "JEDA. Observasi bahasa tubuh mayoritas, lalu atur ulang tempo presentasi Anda agar lebih interaktif.", // Benar
+            opt2: "Tetap paksakan membaca *slide* sesuai gaya Anda sendiri karena materi harus selesai.", // Salah
+            correct: 1,
+            feedbackC: "Ultimate Professional! Jeda (Sistem 2) + Observasi Platinum Rule. Anda menguasai ruang rapat sepenuhnya.",
+            feedbackW: "Ego mengambil alih. Pemimpin yang baik adalah yang beradaptasi, bukan yang memaksakan kehendak."
+        }
+    ];
+
+    // Game State
+    let playerName = "";
+    let playerNIK = "";
+    let currentQ = 0;
+    let score = 0;
+    let historyLog = [];
+    
+    // Timer System
+    const TIME_LIMIT = 10000; // 10 Detik
+    let timeLeft = TIME_LIMIT;
+    let timerInterval;
+
+    function goToBriefing() {
+        const nameInput = document.getElementById('input-name').value.trim();
+        const nikInput = document.getElementById('input-nik').value.trim();
+        
+        if(!nameInput || !nikInput) {
+            alert("Sistem meminta Anda mengisi Nama dan NIK terlebih dahulu.");
+            return;
+        }
+
+        playerName = nameInput;
+        playerNIK = nikInput;
+        document.getElementById('display-name').innerText = playerName;
+        
+        // Init Audio on user interaction
+        initAudio();
+
+        document.getElementById('screen-gateway').classList.remove('active');
+        document.getElementById('screen-briefing').classList.add('active');
+    }
+
+    function startGame() {
+        document.getElementById('screen-briefing').classList.remove('active');
+        document.getElementById('screen-game').classList.add('active');
+        document.getElementById('hud').style.display = 'flex';
+        
+        playBGM();
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if (currentQ >= questions.length) {
+            endGame();
+            return;
+        }
+
+        const qData = questions[currentQ];
+        
+        // Update Progress UI
+        document.getElementById('progress-text').innerText = `${currentQ + 1}/${questions.length}`;
+        document.getElementById('overall-progress').style.width = `${((currentQ) / questions.length) * 100}%`;
+        
+        // Update Text
+        document.getElementById('q-context').innerText = qData.context;
+        document.getElementById('q-text').innerText = qData.q;
+        document.getElementById('q-hint').innerText = qData.hint;
+        
+        // Randomize Options
+        const optsContainer = document.getElementById('options-container');
+        optsContainer.innerHTML = '';
+        
+        let opts = [
+            { text: qData.opt1, id: 1 },
+            { text: qData.opt2, id: 2 }
+        ];
+        // Acak posisi
+        opts.sort(() => Math.random() - 0.5);
+
+        opts.forEach(o => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-option';
+            btn.innerText = o.text;
+            btn.onclick = () => selectAnswer(o.id);
+            optsContainer.appendChild(btn);
+        });
+
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timeLeft = TIME_LIMIT;
+        
+        const bar = document.getElementById('timer-bar');
+        const txt = document.getElementById('timer-text');
+        
+        bar.style.width = '100%';
+        bar.classList.remove('danger-time');
+        txt.classList.remove('danger-text');
+        txt.innerText = "10.0s";
+
+        let lastTime = Date.now();
+
+        timerInterval = setInterval(() => {
+            let now = Date.now();
+            timeLeft -= (now - lastTime);
+            lastTime = now;
+
+            let percentage = (timeLeft / TIME_LIMIT) * 100;
+            bar.style.width = `${Math.max(0, percentage)}%`;
+            txt.innerText = `${Math.max(0, (timeLeft/1000)).toFixed(1)}s`;
+
+            // Efek panik di 3 detik terakhir
+            if (timeLeft <= 3000 && !bar.classList.contains('danger-time')) {
+                bar.classList.add('danger-time');
+                txt.classList.add('danger-text');
+            }
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                handleTimeout();
+            }
+        }, 30);
+    }
+
+    function disableOptions() {
+        const btns = document.querySelectorAll('.btn-option');
+        btns.forEach(btn => btn.disabled = true);
+    }
+
+    function selectAnswer(selectedId) {
+        clearInterval(timerInterval);
+        disableOptions();
+        
+        const qData = questions[currentQ];
+        const isCorrect = (selectedId === qData.correct);
+        
+        if(isCorrect) {
+            score++;
+            document.getElementById('score-display').innerText = score;
+            playSFX('correct');
+        } else {
+            playSFX('wrong');
+        }
+
+        // Simpan log
+        historyLog.push({
+            q: qData.q,
+            status: isCorrect ? "Sistem 2 (Logika)" : "Sistem 1 (Emosi)",
+            feedback: isCorrect ? qData.feedbackC : qData.feedbackW,
+            isCorrect: isCorrect
+        });
+
+        showFeedback(isCorrect, isCorrect ? qData.feedbackC : qData.feedbackW);
+    }
+
+    function handleTimeout() {
+        disableOptions();
+        playSFX('wrong');
+        
+        const qData = questions[currentQ];
+        historyLog.push({
+            q: qData.q,
+            status: "WAKTU HABIS",
+            feedback: "Kepanikan memicu Sistem 1 (Emosi). Mindset Korban mengambil alih.",
+            isCorrect: false
+        });
+
+        showFeedback(false, "Waktu Habis! Anda gagal menekan tombol Jeda. Emosi dan kepanikan (Sistem 1) mengambil alih tindakan Anda.");
+    }
+
+    function showFeedback(isCorrect, message) {
+        const overlay = document.getElementById('feedback-overlay');
+        const title = document.getElementById('fb-title');
+        const desc = document.getElementById('fb-desc');
+        const icon = document.getElementById('fb-icon');
+
+        overlay.classList.add('active');
+        
+        if(isCorrect) {
+            icon.innerText = "🏆";
+            title.innerText = "Logika Aktif!";
+            title.className = "fb-correct";
+        } else {
+            icon.innerText = "⚠️";
+            title.innerText = "Emosi Membajak!";
+            title.className = "fb-wrong";
+        }
+        
+        desc.innerText = message;
+    }
+
+    function nextQuestion() {
+        document.getElementById('feedback-overlay').classList.remove('active');
+        currentQ++;
+        loadQuestion();
+    }
+
+    function endGame() {
+        stopBGM();
+        document.getElementById('hud').style.display = 'none';
+        document.getElementById('screen-game').classList.remove('active');
+        document.getElementById('screen-result').classList.add('active');
+
+        // Kalkulasi Persentase
+        const percent = Math.round((score / questions.length) * 100);
+        const finalScoreEl = document.getElementById('final-score-percent');
+        finalScoreEl.innerText = `${percent}%`;
+        
+        if(percent >= 80) finalScoreEl.style.color = 'var(--success)';
+        else if(percent >= 50) finalScoreEl.style.color = '#f59e0b'; // orange
+        else finalScoreEl.style.color = 'var(--danger)';
+
+        // Logic Badges
+        // Badge 1: Mindset Controller (Q1-Q5, minimal benar 4)
+        let q1to5Correct = historyLog.slice(0,5).filter(h => h.isCorrect).length;
+        if(q1to5Correct >= 4) {
+            document.getElementById('badge-controller').classList.add('earned');
+        }
+
+        // Badge 2: Platinum Adapter (Q6-Q10, minimal benar 4)
+        let q6to10Correct = historyLog.slice(5,10).filter(h => h.isCorrect).length;
+        if(q6to10Correct >= 4) {
+            document.getElementById('badge-adapter').classList.add('earned');
+        }
+
+        // Positive Reinforcement Text
+        const msgBox = document.getElementById('reinforcement-msg');
+        if(percent === 100) {
+            msgBox.innerHTML = `Luar biasa, <b>${playerName}</b>! Kontrol emosimu dan kemampuan adaptasimu sempurna. Kamu adalah "Pengendali" sejati.`;
+            msgBox.style.borderColor = 'var(--success)';
+        } else if (percent >= 70) {
+            msgBox.innerHTML = `Kerja bagus, <b>${playerName}</b>! Kamu berhasil membuktikan dominasi Logika di sebagian besar krisis. Terus asah <i>The Platinum Rule</i>-mu.`;
+            msgBox.style.borderColor = 'var(--primary)';
+        } else {
+            msgBox.innerHTML = `Jangan menyerah, <b>${playerName}</b>. Sistem 1 masih sering membajakmu. Latih terus jeda mentalmu agar tak jadi "Korban" keadaan.`;
+            msgBox.style.borderColor = 'var(--danger)';
+        }
+
+        // Render Debrief Log
+        const logContainer = document.getElementById('result-history');
+        historyLog.forEach((log, index) => {
+            let div = document.createElement('div');
+            div.className = `log-item ${log.isCorrect ? 'correct' : 'wrong'}`;
+            div.innerHTML = `
+                <div class="log-q"><b>Q${index+1}:</b> ${log.q}</div>
+                <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 3px; color: ${log.isCorrect ? 'var(--success)' : 'var(--danger)'}">
+                    Respons: ${log.status}
+                </div>
+                <div class="log-fb">${log.feedback}</div>
+            `;
+            logContainer.appendChild(div);
+        });
+    }
+
+</script>
+
+</body>
+</html>
